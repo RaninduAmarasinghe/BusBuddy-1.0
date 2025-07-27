@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 
@@ -21,6 +22,7 @@ public class Company {
 
     private String companyName;
     private String companyAddress;
+    @Indexed(unique = true)
     private String companyEmail;
     private String companyPhone;
     private String companyPassword;

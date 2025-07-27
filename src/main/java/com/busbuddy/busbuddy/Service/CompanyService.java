@@ -21,9 +21,16 @@ public class CompanyService {
     }
 
     // Example of creating a company with a generated companyId
-    public String createCompany(Company company) {
+    public String createCompany(CompanyDto companyDto) {
         String companyId = generateCompanyId();
-        company.setCompanyId(companyId);  // Set the generated ID
+        Company company = new Company(
+                companyId,
+                companyDto.getCompanyName(),
+                companyDto.getCompanyAddress(),
+                companyDto.getCompanyEmail(),
+                companyDto.getCompanyPhone(),
+                companyDto.getCompanyPassword()
+        );
         companyRepo.save(company);
         return companyId;
     }

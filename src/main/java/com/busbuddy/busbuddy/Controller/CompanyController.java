@@ -1,5 +1,6 @@
 package com.busbuddy.busbuddy.Controller;
 
+import com.busbuddy.busbuddy.Dto.CompanyDto;
 import com.busbuddy.busbuddy.Model.Company;
 import com.busbuddy.busbuddy.Repository.CompanyRepo;
 import com.busbuddy.busbuddy.Service.CompanyService;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/companies")
@@ -23,22 +25,27 @@ public class CompanyController {
 
     // Add a new company
     @PostMapping("/add")
-    public ResponseEntity<String> createCompany(@RequestBody Company company) {
-        String companyId = companyService.createCompany(company);
+    public ResponseEntity<String> createCompany(@RequestBody CompanyDto companyDto) {
+        String companyId = companyService.createCompany(companyDto);
         return ResponseEntity.ok("Company created successfully with ID: " + companyId);
     }
 
     // Get company by ID
     @GetMapping("/{companyId}")
-    public ResponseEntity<Company> getCompanyById(@PathVariable String companyId) {
+    public ResponseEntity<CompanyDto> getCompanyById(@PathVariable String companyId) {
         Optional<Company> company = companyRepo.findById(companyId);
-        return company.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        return company.map(this::mapToDto).map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     // Get all companies
     @GetMapping("/all")
-    public ResponseEntity<List<Company>> getAllCompanies() {
-        return ResponseEntity.ok(companyRepo.findAll());
+    public ResponseEntity<List<CompanyDto>> getAllCompanies() {
+        List<CompanyDto> dtoList = companyRepo.findAll()
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtoList);
     }
 
     // Delete company by ID
@@ -50,15 +57,15 @@ public class CompanyController {
 
     // Update company by ID
     @PutMapping("/update/{companyId}")
-    public ResponseEntity<String> updateCompany(@PathVariable String companyId, @RequestBody Company updatedCompany) {
+    public ResponseEntity<String> updateCompany(@PathVariable String companyId, @RequestBody CompanyDto updatedDto) {
         Optional<Company> existingCompany = companyRepo.findById(companyId);
         if (existingCompany.isPresent()) {
             Company company = existingCompany.get();
-            company.setCompanyName(updatedCompany.getCompanyName());
-            company.setCompanyAddress(updatedCompany.getCompanyAddress());
-            company.setCompanyEmail(updatedCompany.getCompanyEmail());
-            company.setCompanyPhone(updatedCompany.getCompanyPhone());
-            company.setCompanyPassword(updatedCompany.getCompanyPassword());
+            company.setCompanyName(updatedDto.getCompanyName());
+            company.setCompanyAddress(updatedDto.getCompanyAddress());
+            company.setCompanyEmail(updatedDto.getCompanyEmail());
+            company.setCompanyPhone(updatedDto.getCompanyPhone());
+            company.setCompanyPassword(updatedDto.getCompanyPassword());
             companyRepo.save(company);
             return ResponseEntity.ok("Company updated successfully");
         } else {
@@ -68,12 +75,31 @@ public class CompanyController {
 
     // Company login
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody Company company) {
-        Optional<Company> companyOptional = companyRepo.findByCompanyEmail(company.getCompanyEmail());
-        if (companyOptional.isPresent() && companyOptional.get().getCompanyPassword().equals(company.getCompanyPassword())) {
-            return ResponseEntity.ok(companyOptional.get().getCompanyId());
+    public ResponseEntity<String> login(@RequestBody CompanyDto companyDto) {
+        // NOTE: Make sure companyEmail is UNIQUE in DB
+        Optional<Company> optionalCompany = companyRepo.findByCompanyEmail(companyDto.getCompanyEmail());
+
+        if (optionalCompany.isPresent()) {
+            Company company = optionalCompany.get();
+            if (company.getCompanyPassword().equals(companyDto.getCompanyPassword())) {
+                return ResponseEntity.ok(company.getCompanyId());
+            } else {
+                return ResponseEntity.status(401).body("Incorrect password");
+            }
         } else {
-            return ResponseEntity.status(401).body("Incorrect email or password");
+            return ResponseEntity.status(404).body("Company not found");
         }
+    }
+
+    // Utility: Map Model to DTO
+    private CompanyDto mapToDto(Company company) {
+        CompanyDto dto = new CompanyDto();
+        dto.setCompanyId(company.getCompanyId());
+        dto.setCompanyName(company.getCompanyName());
+        dto.setCompanyAddress(company.getCompanyAddress());
+        dto.setCompanyEmail(company.getCompanyEmail());
+        dto.setCompanyPhone(company.getCompanyPhone());
+        dto.setCompanyPassword(company.getCompanyPassword());
+        return dto;
     }
 }

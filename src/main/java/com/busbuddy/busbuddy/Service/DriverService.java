@@ -25,33 +25,28 @@ public class DriverService {
     private CompanyRepo companyRepo;
 
     // Generate a custom ID in the range 1000 - 9999
-    private String generateCustomId() {
-        Random random = new Random();
-        int customId = 1000 + random.nextInt(9000);
-        return String.valueOf(customId);
+    private String generateUniqueDriverId() {
+        String id;
+        do {
+            id = String.valueOf(1000 + new Random().nextInt(9000));
+        } while (driverRepo.existsById(id));
+        return id;
     }
 
     public String createDriver(DriverDto dto) {
-        String customId = generateCustomId();
+        String driverId = generateUniqueDriverId();
 
-        // Ensure uniqueness of driverId
-        while (driverRepo.existsById(customId)) {
-            customId = generateCustomId();
-        }
-
-        // Get company name from companyId
+        // Fetch company name
         String companyName = companyRepo.findById(dto.getCompanyId())
                 .map(company -> company.getCompanyName())
                 .orElse("Unknown Company");
 
-        // Optional: Validate bus exists
-        Bus bus = busRepo.findById(dto.getBusId()).orElse(null);
-        if (bus == null) {
-            throw new IllegalArgumentException("Bus with id " + dto.getBusId() + " does not exist");
-        }
+        // Validate bus exists
+        Bus bus = busRepo.findById(dto.getBusId())
+                .orElseThrow(() -> new IllegalArgumentException("Bus with ID " + dto.getBusId() + " does not exist"));
 
         Driver driver = new Driver(
-                customId,
+                driverId,
                 dto.getDriverName(),
                 dto.getDriverEmail(),
                 dto.getDriverPhone(),
