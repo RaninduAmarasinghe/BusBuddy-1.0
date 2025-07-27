@@ -25,19 +25,18 @@ public class DriverController {
     DriverRepo driverRepo;
 
     @PostMapping("/add")
-public ResponseEntity<String> createDriver(@RequestBody DriverDto driverDto) {
-        try{
+    public ResponseEntity<Map<String, String>> createDriver(@RequestBody DriverDto driverDto) {
+        try {
             String driverId = driverService.createDriver(driverDto);
-            return ResponseEntity.ok("Driver created successfully: " + driverId);
-        }catch (IllegalArgumentException e){
-            return ResponseEntity.badRequest().body(null);
+            Map<String, String> response = new HashMap<>();
+            response.put("driverId", driverId);
+            response.put("message", "Driver created successfully");
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
-    }
-
-    @GetMapping("/company/{companyId}")
-    public ResponseEntity<List<Driver>> getDriversByCompanyId(@PathVariable String companyId) {
-        List<Driver> drivers = driverService.getDriverByCompany(companyId);
-        return ResponseEntity.ok(drivers);
     }
 
     // Driver login

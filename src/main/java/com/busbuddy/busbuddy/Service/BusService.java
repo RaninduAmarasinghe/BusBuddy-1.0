@@ -3,6 +3,7 @@ package com.busbuddy.busbuddy.Service;
 import com.busbuddy.busbuddy.Model.Bus;
 import com.busbuddy.busbuddy.Model.Location;
 import com.busbuddy.busbuddy.Repository.BusRepo;
+import com.busbuddy.busbuddy.Util.CustomIdGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,21 +18,17 @@ public class BusService {
 
     @Autowired
     private BusRepo busRepo;
+    @Autowired
+    private CustomIdGenerator customIdGenerator;
 
-    // Generate a random 4-digit Bus ID (e.g., B1234)
-    public String generateBusId() {
-        Random random = new Random();
-        int id = 1000 + random.nextInt(9000);
-        return "B" + id;
-    }
 
     // Create a new bus and assign it to a company
     public Bus createBus(Bus bus, String companyId) {
-        bus.setBusId(generateBusId());
+        String busId = customIdGenerator.generateUniqueId("B", "bus");
+        bus.setBusId(busId);
         bus.setCompanyId(companyId);
         return busRepo.save(bus);
     }
-
     // Update existing bus by ID
     public boolean updateBus(String busId, Bus updatedBus) {
         Optional<Bus> busOpt = busRepo.findById(busId);

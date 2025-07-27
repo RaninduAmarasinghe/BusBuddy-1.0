@@ -14,15 +14,23 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Driver {
 
     @Id
+    private String id;
+
     @Indexed(unique = true)
     private String driverId;
-    private String driverName;
-    @Indexed(unique = true)
-private String driverEmail;
-private String driverPhone;
-private String driverPassword;
-private String companyId;
-private String companyName;
-private String busId;
 
+    private String driverName;
+
+    @Indexed(unique = true)
+    private String driverEmail;
+
+    private String driverPhone;
+
+    private String driverPassword;
+
+    //private String driverNic;
+
+    private String companyId;
+    private String companyName;
+    private String busId;
 }
