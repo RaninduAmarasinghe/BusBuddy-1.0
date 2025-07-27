@@ -6,6 +6,7 @@ import com.busbuddy.busbuddy.Service.DriverService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.busbuddy.busbuddy.Dto.DriverDto;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,29 +25,13 @@ public class DriverController {
     DriverRepo driverRepo;
 
     @PostMapping("/add")
-    public ResponseEntity<String> createDriver(@RequestBody Driver driver, @RequestParam String companyId) {
-        if (companyId == null || companyId.isEmpty()) {
-            return ResponseEntity.status(400).body("Company ID is required");
+public ResponseEntity<String> createDriver(@RequestBody DriverDto driverDto) {
+        try{
+            String driverId = driverService.createDriver(driverDto);
+            return ResponseEntity.ok("Driver created successfully: " + driverId);
+        }catch (IllegalArgumentException e){
+            return ResponseEntity.badRequest().body(null);
         }
-
-        if (driver.getBusId() == null || driver.getBusId().isEmpty()) {
-            return ResponseEntity.status(400).body("Bus ID is required");
-        }
-
-        // Set company ID to driver
-        driver.setCompanyId(companyId);
-
-        // Save driver
-        String driverId = driverService.createDriver(
-                driver.getDriverName(),
-                driver.getDriverEmail(),
-                driver.getDriverPhone(),
-                driver.getDriverPassword(),
-                companyId,
-                driver.getBusId()
-        );
-
-        return ResponseEntity.ok("Driver Created Successfully: " + driverId);
     }
 
     @GetMapping("/company/{companyId}")

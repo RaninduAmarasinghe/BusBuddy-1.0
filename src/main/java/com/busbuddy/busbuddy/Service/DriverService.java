@@ -1,4 +1,3 @@
-
 package com.busbuddy.busbuddy.Service;
 
 import com.busbuddy.busbuddy.Model.Bus;
@@ -6,7 +5,7 @@ import com.busbuddy.busbuddy.Model.Driver;
 import com.busbuddy.busbuddy.Repository.BusRepo;
 import com.busbuddy.busbuddy.Repository.CompanyRepo;
 import com.busbuddy.busbuddy.Repository.DriverRepo;
-import com.busbuddy.busbuddy.Repository.DriverRepo;
+import com.busbuddy.busbuddy.Dto.DriverDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,36 +27,49 @@ public class DriverService {
     // Generate a custom ID in the range 1000 - 9999
     private String generateCustomId() {
         Random random = new Random();
-        int customId = 1000 + random.nextInt(9000);  // Random 4-digit ID
+        int customId = 1000 + random.nextInt(9000);
         return String.valueOf(customId);
     }
 
-    public String createDriver(String name, String email, String phone, String password, String companyId, String busId) {
+    public String createDriver(DriverDto dto) {
         String customId = generateCustomId();
 
-        // Ensure the ID is unique
+        // Ensure uniqueness of driverId
         while (driverRepo.existsById(customId)) {
             customId = generateCustomId();
         }
 
-       // Fetch company name
-        String companyName = companyRepo.findById(companyId)
+        // Get company name from companyId
+        String companyName = companyRepo.findById(dto.getCompanyId())
                 .map(company -> company.getCompanyName())
                 .orElse("Unknown Company");
 
-        // Fetch bus by busNumber
-        Bus bus = busRepo.findById(busId).orElse(null);
-        if (bus != null) {
-            busRepo.save(bus); // Save bus details (if additional properties needed)
-        }//
+        // Optional: Validate bus exists
+        Bus bus = busRepo.findById(dto.getBusId()).orElse(null);
+        if (bus == null) {
+            throw new IllegalArgumentException("Bus with id " + dto.getBusId() + " does not exist");
+        }
 
-        Driver driver = new Driver(customId, name, email, phone, password, companyId, companyName, busId);
+        Driver driver = new Driver(
+                customId,
+                dto.getDriverName(),
+                dto.getDriverEmail(),
+                dto.getDriverPhone(),
+                dto.getDriverPassword(),
+                dto.getCompanyId(),
+                companyName,
+                dto.getBusId()
+        );
+
         Driver savedDriver = driverRepo.save(driver);
         return savedDriver.getDriverId();
     }
+
     public List<Driver> getDriverByCompany(String companyId) {
         return driverRepo.findByCompanyId(companyId);
     }
 
+    public Driver getDriverByEmail(String email) {
+        return driverRepo.findByDriverEmail(email).orElse(null);
+    }
 }
-
