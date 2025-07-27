@@ -4,6 +4,7 @@ import com.busbuddy.busbuddy.Model.Company;
 import com.busbuddy.busbuddy.Repository.CompanyRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.busbuddy.busbuddy.Dto.CompanyDto;
 
 import java.util.Random;
 
