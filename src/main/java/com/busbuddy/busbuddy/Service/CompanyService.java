@@ -16,7 +16,6 @@ public class CompanyService {
     @Autowired
     private CustomIdGenerator customIdGenerator;
 
-    // Generate a custom company ID in the format C001, C002, etc.
 
     public String createCompany(CompanyDto companyDto) {
         String companyId = customIdGenerator.generateUniqueId("C", "company");

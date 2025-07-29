@@ -6,11 +6,11 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
-@Document
+@Document(collection = "admin")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Admin {
-    private int id;
+    private String id;
     private String adminName;
     private String adminPassword;
 }
