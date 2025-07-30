@@ -15,7 +15,7 @@ public class AdminService {
     private AdminRepo adminRepo;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private PasswordService passwordService;
 
     @Autowired
     private CustomIdGenerator customIdGenerator;
@@ -29,11 +29,11 @@ public class AdminService {
     public Admin saveAdmin(AdminDto adminDto) {
         Admin admin = new Admin();
         admin.setAdminName(adminDto.getAdminName());
-        admin.setAdminPassword(passwordEncoder.encode(adminDto.getAdminPassword()));
+        admin.setAdminPassword(passwordService.encode(adminDto.getAdminPassword()));
         return adminRepo.save(admin);
     }
 
     public boolean verifyPassword(String raw, String encoded) {
-        return passwordEncoder.matches(raw, encoded);
+        return passwordService.verify(raw, encoded);
     }
 }

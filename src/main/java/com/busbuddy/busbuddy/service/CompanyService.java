@@ -6,6 +6,7 @@ import com.busbuddy.busbuddy.model.Company;
 import com.busbuddy.busbuddy.repository.CompanyRepo;
 import com.busbuddy.busbuddy.util.CustomIdGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,17 +21,24 @@ public class CompanyService {
     @Autowired
     private CustomIdGenerator customIdGenerator;
 
+    @Autowired
+    private PasswordService passwordService;
+
     // Create a new company
     public String createCompany(CompanyDto companyDto) {
         String companyId = customIdGenerator.generateUniqueId("C", "company");
+
+        String encodedPassword = passwordService.encode(companyDto.getCompanyPassword());
+
         Company company = new Company(
                 companyId,
                 companyDto.getCompanyName(),
                 companyDto.getCompanyAddress(),
                 companyDto.getCompanyEmail(),
                 companyDto.getCompanyPhone(),
-                companyDto.getCompanyPassword()
+                encodedPassword
         );
+
         companyRepo.save(company);
         return companyId;
     }
@@ -78,5 +86,11 @@ public class CompanyService {
         }
 
         return company.getCompanyId();
+    }
+    public Company findByCompanyEmail(String email) {
+        return companyRepo.findByCompanyEmail(email).orElse(null);
+    }
+    public boolean verifyPassword(String raw, String encoded) {
+        return passwordService.verify(raw, encoded);
     }
 }

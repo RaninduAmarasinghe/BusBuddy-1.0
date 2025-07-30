@@ -32,8 +32,7 @@ public class AdminJwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
-        return path.equals("/admin/login") || path.equals("/admin/add") ||
-                path.equals("/companies/add") || path.equals("/companies/login");
+        return path.equals("/admin/login") || path.equals("/admin/add");
     }
     @Override
     protected void doFilterInternal(HttpServletRequest request,
