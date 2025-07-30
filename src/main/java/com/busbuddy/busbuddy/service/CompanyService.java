@@ -81,11 +81,11 @@ public class CompanyService {
         Company company = companyRepo.findByCompanyEmail(dto.getCompanyEmail())
                 .orElseThrow(() -> new RuntimeException("Company not found"));
 
-        if (!company.getCompanyPassword().equals(dto.getCompanyPassword())) {
+        if (!passwordService.verify(dto.getCompanyPassword(), company.getCompanyPassword())) {
             throw new RuntimeException("Incorrect password");
         }
 
-        return company.getCompanyId();
+        return company.getCompanyId();  // Or return a JWT token here if needed
     }
     public Company findByCompanyEmail(String email) {
         return companyRepo.findByCompanyEmail(email).orElse(null);
