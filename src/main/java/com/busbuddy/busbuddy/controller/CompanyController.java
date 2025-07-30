@@ -1,8 +1,8 @@
 package com.busbuddy.busbuddy.controller;
 
 import com.busbuddy.busbuddy.dto.CompanyDto;
+import com.busbuddy.busbuddy.dto.CompanyLoginDto;
 import com.busbuddy.busbuddy.model.Company;
-import com.busbuddy.busbuddy.repository.CompanyRepo;
 import com.busbuddy.busbuddy.service.CompanyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +20,6 @@ public class CompanyController {
     @Autowired
     private CompanyService companyService;
 
-    @Autowired
-    private CompanyRepo companyRepo;
-
     // Add a new company
     @PostMapping("/add")
     public ResponseEntity<String> createCompany(@RequestBody CompanyDto companyDto) {
@@ -33,15 +30,16 @@ public class CompanyController {
     // Get company by ID
     @GetMapping("/{companyId}")
     public ResponseEntity<CompanyDto> getCompanyById(@PathVariable String companyId) {
-        Optional<Company> company = companyRepo.findById(companyId);
-        return company.map(this::mapToDto).map(ResponseEntity::ok)
+        Optional<Company> companyOpt = companyService.getCompanyById(companyId);
+        return companyOpt.map(this::mapToDto)
+                .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     // Get all companies
     @GetMapping("/all")
     public ResponseEntity<List<CompanyDto>> getAllCompanies() {
-        List<CompanyDto> dtoList = companyRepo.findAll()
+        List<CompanyDto> dtoList = companyService.getAllCompanies()
                 .stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
@@ -51,43 +49,30 @@ public class CompanyController {
     // Delete company by ID
     @DeleteMapping("/delete/{companyId}")
     public ResponseEntity<String> deleteCompany(@PathVariable String companyId) {
-        companyRepo.deleteById(companyId);
+        companyService.deleteCompany(companyId);
         return ResponseEntity.ok("Company deleted successfully");
     }
 
     // Update company by ID
     @PutMapping("/update/{companyId}")
-    public ResponseEntity<String> updateCompany(@PathVariable String companyId, @RequestBody CompanyDto updatedDto) {
-        Optional<Company> existingCompany = companyRepo.findById(companyId);
-        if (existingCompany.isPresent()) {
-            Company company = existingCompany.get();
-            company.setCompanyName(updatedDto.getCompanyName());
-            company.setCompanyAddress(updatedDto.getCompanyAddress());
-            company.setCompanyEmail(updatedDto.getCompanyEmail());
-            company.setCompanyPhone(updatedDto.getCompanyPhone());
-            company.setCompanyPassword(updatedDto.getCompanyPassword());
-            companyRepo.save(company);
-            return ResponseEntity.ok("Company updated successfully");
-        } else {
-            return ResponseEntity.status(404).body("Company not found");
+    public ResponseEntity<String> updateCompany(@PathVariable String companyId,
+                                                @RequestBody CompanyDto updatedDto) {
+        try {
+            String result = companyService.updateCompany(companyId, updatedDto);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
         }
     }
 
     // Company login
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody CompanyDto companyDto) {
-        // NOTE: Make sure companyEmail is UNIQUE in DB
-        Optional<Company> optionalCompany = companyRepo.findByCompanyEmail(companyDto.getCompanyEmail());
-
-        if (optionalCompany.isPresent()) {
-            Company company = optionalCompany.get();
-            if (company.getCompanyPassword().equals(companyDto.getCompanyPassword())) {
-                return ResponseEntity.ok(company.getCompanyId());
-            } else {
-                return ResponseEntity.status(401).body("Incorrect password");
-            }
-        } else {
-            return ResponseEntity.status(404).body("Company not found");
+    public ResponseEntity<String> login(@RequestBody CompanyLoginDto companyLoginDto) {
+        try {
+            String companyId = companyService.login(companyLoginDto);
+            return ResponseEntity.ok(companyId);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(401).body(e.getMessage());
         }
     }
 

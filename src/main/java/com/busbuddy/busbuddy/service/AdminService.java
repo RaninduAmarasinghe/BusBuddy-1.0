@@ -1,7 +1,9 @@
 package com.busbuddy.busbuddy.service;
 
+import com.busbuddy.busbuddy.dto.AdminDto;
 import com.busbuddy.busbuddy.model.Admin;
 import com.busbuddy.busbuddy.repository.AdminRepo;
+import com.busbuddy.busbuddy.util.CustomIdGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,12 +17,19 @@ public class AdminService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private CustomIdGenerator customIdGenerator;
+
+
+
     public Admin findByAdminName(String adminName) {
         return adminRepo.findByAdminName(adminName);
     }
 
-    public Admin saveAdmin(Admin admin) {
-        admin.setAdminPassword(passwordEncoder.encode(admin.getAdminPassword()));
+    public Admin saveAdmin(AdminDto adminDto) {
+        Admin admin = new Admin();
+        admin.setAdminName(adminDto.getAdminName());
+        admin.setAdminPassword(passwordEncoder.encode(adminDto.getAdminPassword()));
         return adminRepo.save(admin);
     }
 

@@ -1,6 +1,6 @@
 package com.busbuddy.busbuddy.controller;
 
-import com.busbuddy.busbuddy.dto.AdminLoginDto;
+import com.busbuddy.busbuddy.dto.AdminDto;
 import com.busbuddy.busbuddy.model.Admin;
 import com.busbuddy.busbuddy.service.AdminService;
 import com.busbuddy.busbuddy.util.JwtUtil;
@@ -20,16 +20,16 @@ public class AdminController {
     private JwtUtil jwtUtil;
 
     @PostMapping("/add")
-    public ResponseEntity<?> register(@RequestBody Admin admin) {
-        if (adminService.findByAdminName(admin.getAdminName()) != null) {
+    public ResponseEntity<?> register(@RequestBody AdminDto adminDto) {
+        if (adminService.findByAdminName(adminDto.getAdminName()) != null) {
             return ResponseEntity.badRequest().body("Admin already exists");
         }
-        adminService.saveAdmin(admin);
+        adminService.saveAdmin(adminDto);
         return ResponseEntity.ok("Admin registered successfully");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AdminLoginDto loginDto) {
+    public ResponseEntity<?> login(@RequestBody AdminDto loginDto) {
         Admin admin = adminService.findByAdminName(loginDto.getAdminName());
         if (admin != null && adminService.verifyPassword(loginDto.getAdminPassword(), admin.getAdminPassword())) {
             String token = jwtUtil.generateToken(admin.getAdminName());
