@@ -1,5 +1,6 @@
 package com.busbuddy.busbuddy.service;
 
+import com.busbuddy.busbuddy.dto.DriverLoginDto;
 import com.busbuddy.busbuddy.model.Bus;
 import com.busbuddy.busbuddy.model.Driver;
 import com.busbuddy.busbuddy.repository.BusRepo;
@@ -27,37 +28,48 @@ public class DriverService {
     @Autowired
     private CustomIdGenerator customIdGenerator;
 
-    public String createDriver(DriverDto dto) {
-        // Generate driver ID
+    @Autowired
+    private PasswordService passwordService;
+
+    public String createDriver(DriverDto driverDto) {
+        // Generate a custom driver ID (this will be used as the MongoDB _id)
         String driverId = customIdGenerator.generateUniqueId("D", "driver");
 
-        // Fetch company name (optional, not used in saving driver)
-        String companyName = companyRepo.findById(dto.getCompanyId())
+        // Optionally fetch company name from company ID
+        String companyName = companyRepo.findById(driverDto.getCompanyId())
                 .map(company -> company.getCompanyName())
                 .orElse("Unknown Company");
 
-        // Validate bus exists
-        Bus bus = busRepo.findById(dto.getBusId())
-                .orElseThrow(() -> new IllegalArgumentException("Bus with ID " + dto.getBusId() + " does not exist"));
+        // Validate that the bus exists
+        Bus bus = busRepo.findById(driverDto.getBusId())
+                .orElseThrow(() -> new IllegalArgumentException("Bus with ID " + driverDto.getBusId() + " does not exist"));
 
-        // Create and populate driver
+        // Create the Driver object
         Driver driver = new Driver();
-        driver.setDriverId(driverId);
-        driver.setDriverName(dto.getDriverName()); // Assuming you have getName() in DTO
-        driver.setDriverEmail(dto.getDriverEmail());
-      //  driver.setDriverNic(dto.getNic()); // Set NIC
-        driver.setDriverPhone(dto.getDriverPhone());
-        driver.setDriverPassword(dto.getDriverPassword());
-        driver.setCompanyId(dto.getCompanyId());
+        driver.setDriverId(driverId);  // This is now also the Mongo _id
+        driver.setDriverName(driverDto.getDriverName());
+        driver.setDriverEmail(driverDto.getDriverEmail());
+        driver.setDriverPhone(driverDto.getDriverPhone());
+        driver.setDriverPassword(passwordService.encode(driverDto.getDriverPassword())); // Secure hash
+        driver.setCompanyId(driverDto.getCompanyId());
         driver.setCompanyName(companyName);
-        driver.setBusId(dto.getBusId());
+        driver.setBusId(driverDto.getBusId());
 
-
-        // Save and return driver ID
+        // Save the driver and return the ID
         Driver savedDriver = driverRepo.save(driver);
         return savedDriver.getDriverId();
     }
 
+    public Driver login(DriverLoginDto dto) {
+        Driver driver = driverRepo.findByDriverEmail(dto.getDriverEmail())
+                .orElseThrow(() -> new RuntimeException("Driver not found"));
+
+        if (!passwordService.verify(dto.getDriverPassword(), driver.getDriverPassword())) {
+            throw new RuntimeException("Incorrect password");
+        }
+
+        return driver; // You can generate JWT here if needed
+    }
 
     public List<Driver> getDriverByCompany(String companyId) {
         return driverRepo.findByCompanyId(companyId);
@@ -65,5 +77,12 @@ public class DriverService {
 
     public Driver getDriverByEmail(String email) {
         return driverRepo.findByDriverEmail(email).orElse(null);
+    }
+
+    public boolean verifyPassword(String raw, String encoded) {
+        return passwordService.verify(raw, encoded);
+    }
+    public String encodePassword(String rawPassword) {
+        return passwordService.encode(rawPassword);
     }
 }

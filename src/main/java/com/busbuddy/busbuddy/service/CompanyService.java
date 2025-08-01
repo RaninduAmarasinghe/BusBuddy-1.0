@@ -70,7 +70,6 @@ public class CompanyService {
         company.setCompanyAddress(updatedDto.getCompanyAddress());
         company.setCompanyEmail(updatedDto.getCompanyEmail());
         company.setCompanyPhone(updatedDto.getCompanyPhone());
-        company.setCompanyPassword(updatedDto.getCompanyPassword());
 
         companyRepo.save(company);
         return "Company updated successfully";

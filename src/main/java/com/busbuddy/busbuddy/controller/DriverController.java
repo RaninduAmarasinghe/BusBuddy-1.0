@@ -1,17 +1,15 @@
 package com.busbuddy.busbuddy.controller;
 
+import com.busbuddy.busbuddy.dto.DriverDto;
+import com.busbuddy.busbuddy.dto.DriverLoginDto;
 import com.busbuddy.busbuddy.model.Driver;
 import com.busbuddy.busbuddy.repository.DriverRepo;
 import com.busbuddy.busbuddy.service.DriverService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.busbuddy.busbuddy.dto.DriverDto;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/driver")
@@ -22,10 +20,18 @@ public class DriverController {
     private DriverService driverService;
 
     @Autowired
-    DriverRepo driverRepo;
+    private DriverRepo driverRepo;
 
+    // Create (Register) Driver
     @PostMapping("/add")
-    public ResponseEntity<Map<String, String>> createDriver(@RequestBody DriverDto driverDto) {
+    public ResponseEntity<Map<String, String>> createDriver(
+            @RequestBody DriverDto driverDto,
+            @RequestParam(required = false) String companyId) {
+
+        if (companyId != null && (driverDto.getCompanyId() == null || driverDto.getCompanyId().isEmpty())) {
+            driverDto.setCompanyId(companyId);
+        }
+
         try {
             String driverId = driverService.createDriver(driverDto);
             Map<String, String> response = new HashMap<>();
@@ -39,16 +45,14 @@ public class DriverController {
         }
     }
 
-    // Driver login
+    // Login
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Driver driver) {
-        Optional<Driver> driverOptional = driverRepo.findByDriverEmail(driver.getDriverEmail());
+    public ResponseEntity<?> login(@RequestBody DriverLoginDto driverLoginDto) {
+        Optional<Driver> driverOptional = driverRepo.findByDriverEmail(driverLoginDto.getDriverEmail());
 
         if (driverOptional.isPresent()) {
             Driver dbDriver = driverOptional.get();
-
-            if (dbDriver.getDriverPassword().equals(driver.getDriverPassword())) {
-                // Return full driver data as structured JSON
+            if (driverService.verifyPassword(driverLoginDto.getDriverPassword(), dbDriver.getDriverPassword())) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("driverId", dbDriver.getDriverId());
                 response.put("driverName", dbDriver.getDriverName());
@@ -58,24 +62,26 @@ public class DriverController {
                 response.put("busId", dbDriver.getBusId());
 
                 return ResponseEntity.ok(response);
-            } else {
-                return ResponseEntity.status(401).body("Invalid email or password");
             }
-        } else {
-            return ResponseEntity.status(401).body("Invalid email or password");
         }
+        return ResponseEntity.status(401).body(Map.of("error", "Invalid email or password"));
     }
 
     // Update driver
     @PutMapping("/update/{driverId}")
     public ResponseEntity<String> updateDriver(@PathVariable String driverId, @RequestBody Driver updatedDriver) {
-        Optional<Driver> existingDriver = driverRepo.findById(driverId);
-        if (existingDriver.isPresent()) {
-            Driver driver = existingDriver.get();
+        Optional<Driver> existingDriverOpt = driverRepo.findById(driverId);
+        if (existingDriverOpt.isPresent()) {
+            Driver driver = existingDriverOpt.get();
             driver.setDriverName(updatedDriver.getDriverName());
             driver.setDriverEmail(updatedDriver.getDriverEmail());
             driver.setDriverPhone(updatedDriver.getDriverPhone());
-            driver.setDriverPassword(updatedDriver.getDriverPassword());
+
+            // Encode the new password (if changed)
+            if (!driverService.verifyPassword(updatedDriver.getDriverPassword(), driver.getDriverPassword())) {
+                driver.setDriverPassword(driverService.encodePassword(updatedDriver.getDriverPassword()));
+            }
+
             driverRepo.save(driver);
             return ResponseEntity.ok("Driver updated successfully");
         } else {
@@ -83,7 +89,7 @@ public class DriverController {
         }
     }
 
-    // Delete a driver
+    // Delete driver
     @DeleteMapping("/delete/{driverId}")
     public ResponseEntity<String> deleteDriver(@PathVariable String driverId) {
         if (driverRepo.existsById(driverId)) {
@@ -94,8 +100,10 @@ public class DriverController {
         }
     }
 
+    // Search by ID or name
     @GetMapping("/search")
-    public List<Driver> searchDrivers(@RequestParam String query) {
-        return driverRepo.findByDriverIdContainingIgnoreCaseOrDriverNameContainingIgnoreCase(query, query);
+    public ResponseEntity<List<Driver>> searchDrivers(@RequestParam String query) {
+        List<Driver> results = driverRepo.findByDriverIdContainingIgnoreCaseOrDriverNameContainingIgnoreCase(query, query);
+        return ResponseEntity.ok(results);
     }
 }
