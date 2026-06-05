@@ -89,6 +89,8 @@ public class SecurityConfig {
                                 "/bus/company/**",
                                 "/bus/details/**",
                                 "/bus/schedules",
+                                "/bus/update/**",
+                                "/bus/delete/**",
 
                                 "/ws-location/**"
                         ).permitAll()
