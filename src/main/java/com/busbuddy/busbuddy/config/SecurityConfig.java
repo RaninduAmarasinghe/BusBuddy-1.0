@@ -82,6 +82,8 @@ public class SecurityConfig {
                                 "/driver/login",
                                 "/driver/add",
                                 "/driver/search",
+                                "/driver/update/**",
+                                "/driver/delete/**",
 
                                 "/bus/add",
                                 "/bus/company/**",
