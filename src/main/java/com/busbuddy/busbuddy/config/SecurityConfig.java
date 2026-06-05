@@ -81,6 +81,7 @@ public class SecurityConfig {
 
                                 "/driver/login",
                                 "/driver/add",
+                                "/driver/search"
 
                                 "/bus/add",
                                 "/bus/company/**",
