@@ -78,6 +78,7 @@ public class SecurityConfig {
 
                                 "/companies/login",
                                 "/companies/add",
+                                "/companies/**",
 
                                 "/driver/login",
                                 "/driver/add",
